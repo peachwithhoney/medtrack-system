@@ -52,3 +52,27 @@ def create_prescricao(paciente_id, medico_id, medicamento_id, quantidade, data_p
     """
     params = (paciente_id, medico_id, medicamento_id, quantidade, data_prescricao)
     insert_data(query, params)
+
+def search_medicamentos_by_name(name):
+    query = "SELECT * FROM medicamentos WHERE nome LIKE %s"
+    params = (f"%{name}%",)
+    return query_data(query, params, fetch_all=True)
+
+def filter_medicamentos_by_estoque(min_estoque, max_estoque):
+    query = "SELECT * FROM medicamentos WHERE 1=1"
+    params = []
+
+    if min_estoque is not None:
+        query += " AND estoque >= %s"
+        params.append(min_estoque)
+
+    if max_estoque is not None:
+        query += " AND estoque <= %s"
+        params.append(max_estoque)
+
+    return query_data(query, params, fetch_all=True)
+
+def filter_medicamentos_by_alerta():
+    query = "SELECT * FROM medicamentos WHERE estoque < alerta_estoque"
+
+    return query_data(query, fetch_all=True)
