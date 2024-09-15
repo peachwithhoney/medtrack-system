@@ -4,7 +4,7 @@ from PIL import ImageTk, Image
 from tkinter import messagebox
 from werkzeug.security import check_password_hash
 import auth_services
-
+from db_operations import get_db_connection
 
 class LoginForm:
     def __init__(self, window):
@@ -77,17 +77,25 @@ class LoginForm:
             messagebox.showerror("Erro", "Email e senha são obrigatórios")
             return
 
-        user = auth_services.query_user_by_email(email)
+        try:
+            
+            with get_db_connection() as db:
+                query = "SELECT * FROM usuarios WHERE email = %s"
+                result = db.query(query, (email,))
+                user = result[0] if result else None
 
-        if not user:
-            messagebox.showerror("Erro", "Usuário não encontrado")
-            return
+            if not user:
+                messagebox.showerror("Erro", "Usuário não encontrado")
+                return
+
+            if not check_password_hash(user['senha'], password):
+                messagebox.showerror("Erro", "Senha incorreta")
+                return
+
+            messagebox.showinfo("Sucesso", f"Bem-vindo {user['nome']}!")
         
-        if not check_password_hash(user['senha'], password):
-            messagebox.showerror("Erro", "Senha incorreta")
-            return
-
-        messagebox.showinfo("Sucesso", f"Bem-vindo {user['nome']}!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
 
 def page():
     window = Tk()

@@ -42,7 +42,7 @@ class RealDB:
 
 @contextmanager
 def get_db_connection():
-    db = RealDB(host='localhost', database='nome_do_banco', user='seu_usuario', password='sua_senha')
+    db = RealDB(host='localhost', database='db_medtrack', user='root', password='ventilador22')
     db.connect()
     try:
         yield db
