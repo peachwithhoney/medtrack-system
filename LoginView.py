@@ -12,6 +12,10 @@ class LoginForm:
         self.window.geometry("1166x718")
         self.window.state('zoomed')
 
+        # ============================Window Icon============================
+        icon = PhotoImage(file='images/image_logo_1.png')
+        self.window.iconphoto(True, icon)
+
         # ============================background image============================
         self.bg_frame = Image.open('images/background_1.png')
         photo = ImageTk.PhotoImage(self.bg_frame)
