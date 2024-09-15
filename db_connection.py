@@ -1,7 +1,6 @@
-# db_connection.py
-
 import mysql.connector
 from mysql.connector import Error
+from contextlib import contextmanager
 
 class RealDB:
     def __init__(self, host, database, user, password):
@@ -25,6 +24,11 @@ class RealDB:
             print(f"Erro ao conectar ao banco de dados: {e}")
             self.connection = None
 
+    def close(self):
+        if self.connection and self.connection.is_connected():
+            self.connection.close()
+            print("Conexão com o banco de dados encerrada.")
+
     def query(self, query, params=None):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -36,11 +40,14 @@ class RealDB:
             print(f"Erro ao executar a consulta: {e}")
             return None
 
-    def close(self):
-        if self.connection.is_connected():
-            self.connection.close()
-            print("Conexão com o banco de dados encerrada.")
-
-
-db = RealDB(host='localhost', database='nome_do_banco', user='seu_usuario', password='sua_senha')
-db.connect()
+@contextmanager
+def get_db_connection():
+    db = RealDB(host='localhost', database='nome_do_banco', user='seu_usuario', password='sua_senha')
+    db.connect()
+    try:
+        yield db.connection
+    except Error as e:
+        print(f"Erro durante a operação no banco de dados: {e}")
+        db.connection.rollback()  # Em caso de erro, desfaz qualquer alteração no banco
+    finally:
+        db.close()

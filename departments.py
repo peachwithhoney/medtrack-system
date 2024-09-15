@@ -61,7 +61,7 @@ class DepartmentManager:
     @staticmethod
     def delete_department(id, user_is_admin):
         if not user_is_admin:
-            logging.warning("Access negado. Apenas administradores podem deletar departamentos.")
+            logging.warning("Permissão negada: usuário não é administrador.")
             return
 
         try:

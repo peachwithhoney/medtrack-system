@@ -25,9 +25,9 @@ class SurgeryManager:
                     """
                     cursor.execute(query, (paciente_id, medico_id, tipo, descricao))
                     conn.commit()
-                    logging.info("Surgery recorded successfully!")
+                    logging.info("Cirurgia registrada com sucesso!")
         except mysql.connector.Error as err:
-            logging.error(f"Error creating surgery: {err}")
+            logging.error(f"Erro ao tentar registrar a cirurgia: {err}")
 
     @staticmethod
     def read_surgeries():
@@ -39,7 +39,7 @@ class SurgeryManager:
                     surgeries = cursor.fetchall()
                     return surgeries
         except mysql.connector.Error as err:
-            logging.error(f"Error reading surgeries: {err}")
+            logging.error(f"Erro ao tentar visualizar a cirurgia: {err}")
             return []
 
     @staticmethod
@@ -56,12 +56,12 @@ class SurgeryManager:
                     conn.commit()
                     logging.info("Surgery updated successfully!")
         except mysql.connector.Error as err:
-            logging.error(f"Error updating surgery: {err}")
+            logging.error(f"Erro ao tentar atualizar a cirurgia : {err}")
 
     @staticmethod
     def delete_surgery(id, user_is_admin):
         if not user_is_admin:
-            logging.warning("Access denied. Only administrators can delete surgeries.")
+            logging.warning("Permissão negada: usuário não é administrador.")
             return
 
         try:
@@ -70,6 +70,6 @@ class SurgeryManager:
                     query = "DELETE FROM cirurgias WHERE id = %s"
                     cursor.execute(query, (id,))
                     conn.commit()
-                    logging.info("Surgery deleted successfully!")
+                    logging.info("Cirurgia deletada com sucesso !")
         except mysql.connector.Error as err:
-            logging.error(f"Error deleting surgery: {err}")
+            logging.error(f"Erro ao tentar deletar cirurgia : {err}")
