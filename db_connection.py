@@ -45,9 +45,10 @@ def get_db_connection():
     db = RealDB(host='localhost', database='nome_do_banco', user='seu_usuario', password='sua_senha')
     db.connect()
     try:
-        yield db.connection
+        yield db
     except Error as e:
         print(f"Erro durante a operação no banco de dados: {e}")
-        db.connection.rollback()  # Em caso de erro, desfaz qualquer alteração no banco
+        if db.connection:
+            db.connection.rollback()  
     finally:
         db.close()

@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify, g
 from werkzeug.security import check_password_hash
 import jwt
-from datetime import datetime, timedelta
-import logging
-from db_connection import db 
+from datetime import datetime, timedelta, timezone
+import os
+from db_operations import query_user_by_email
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
 
 def authenticate():
     data = request.get_json()
@@ -16,19 +16,19 @@ def authenticate():
     if not email or not password:
         return jsonify({'message': 'Email e senha são obrigatórios'}), 400
     
-    user = db.query("SELECT * FROM usuarios WHERE email = %s", (email,))
+    user = query_user_by_email(email)
     if not user:
         return jsonify({'message': 'Usuário não encontrado'}), 404
     
-    user = user[0]
+    user = user[0]  
 
     if not check_password_hash(user['senha'], password):
         return jsonify({'message': 'Senha incorreta'}), 401
     
     token = jwt.encode({
         'sub': user['id'],
-        'user_type': user['tipo_usuario'],
-        'exp': datetime.utcnow() + timedelta(minutes=30)
+        'user_type': user['tipo_usuario'],  
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=30)
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': token}), 200
@@ -57,13 +57,11 @@ def admin_action():
     if g.current_user_type != 'admin':
         return jsonify({'message': 'Acesso negado'}), 403
     
-    # Código para ação administrativa aqui
     return jsonify({'message': 'Ação administrativa realizada com sucesso'}), 200
 
 @app.teardown_appcontext
 def close_db(error):
-    if db.connection:
-        db.close()
+    pass
 
 if __name__ == "__main__":
     app.run(debug=True)
