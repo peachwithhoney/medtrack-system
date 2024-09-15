@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash
 import auth_services
 from db_operations import get_db_connection
 
-class PacienteView:
+class MedicoView:
     def __init__(self, window):
         self.window = window
         self.window.title("Medtrack")
@@ -20,7 +20,7 @@ class PacienteView:
         self.window.iconphoto(True, icon)
 
         # ============================Header============================
-        self.header_image = Image.open('images/headbar_pacientes.png')
+        self.header_image = Image.open('images/headbar_medicos.png')
         self.header_image_resized = self.header_image.resize((1280, 600), Image.LANCZOS) 
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
@@ -87,7 +87,7 @@ class PacienteView:
 
 def page():
     window = Tk()
-    PacienteView(window)
+    MedicoView(window)
     window.mainloop()
 
 if __name__ == "__main__":
