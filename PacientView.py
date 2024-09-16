@@ -5,6 +5,7 @@ from tkinter import messagebox
 from werkzeug.security import check_password_hash
 import auth_services
 from db_operations import get_db_connection
+from notification_operation import get_notifications
 
 class PacienteView:
     def __init__(self, window):
@@ -25,9 +26,9 @@ class PacienteView:
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
         self.header_image_label.image = photo
-        self.header_image_label.place(x=0, y=0, width=1366, height=80)
+        self.header_image_label.place(x=0, y=0, width=2366, height=80)
 
-        self.header_line = Canvas(self.window, width=1366, height=1, bg="#000000", highlightthickness=0)
+        self.header_line = Canvas(self.window, width=2600, height=1, bg="#000000", highlightthickness=0)
         self.header_line.place(x=0, y=82)
 
         # ============================Botão de Logout no Header============================
@@ -41,33 +42,38 @@ class PacienteView:
 
         # ================== SIDEBAR ===================================================
         self.sidebar = Frame(self.window, bg='#F4F4F4')
-        self.sidebar.place(x=0, y=85, width=300, height=750)
+        self.sidebar.place(x=0, y=85, width=300, height=1000)
 
         # ============= BODY ==========================================================
         
         # body frame 1
-        self.body_frame_1_image = Image.open('images/12.png')
-        self.body_frame_1_resized = self.body_frame_1_image.resize((1280, 600), Image.LANCZOS) 
+        self.body_frame_1_image = Image.open('images/Medtrack (4).png')
+        self.body_frame_1_resized = self.body_frame_1_image.resize((1800, 1000), Image.LANCZOS) 
         self.body_frame_1_photo = ImageTk.PhotoImage(self.body_frame_1_resized)
         self.body_frame_1_label = Label(self.window, image=self.body_frame_1_photo, bg='#EAE9E8')
         self.body_frame_1_label.image = self.body_frame_1_photo
-        self.body_frame_1_label.place(x=328, y=110, width=600, height=350)
+        self.body_frame_1_label.place(x=328, y=110, width=900, height=600)
+
+        # adicionar pacientes
+
+        #self.patients_frame = Frame(self.window, bg='#F4F4F4')
+        #self.patients_frame.place(x=350, y=120, width=800, height=560)
+        #self.update_patients()
 
         # body frame 2
         self.body_frame_2_image = Image.open('images/19.png')
-        self.body_frame_2_resized = self.body_frame_2_image.resize((1180, 780), Image.LANCZOS)  
+        self.body_frame_2_resized = self.body_frame_2_image.resize((1700, 780), Image.LANCZOS)  
         self.body_frame_2_photo = ImageTk.PhotoImage(self.body_frame_2_resized)
         self.body_frame_2_label = Label(self.window, image=self.body_frame_2_photo, bg='#EAE9E8')
         self.body_frame_2_label.image = self.body_frame_2_photo
-        self.body_frame_2_label.place(x=1000, y=110, width=310, height=600)
+        self.body_frame_2_label.place(x=1200, y=110, width=500, height=600)
 
-        # body frame 3
-        self.body_frame_3_image = Image.open('images/20.png')
-        self.body_frame_3_resized = self.body_frame_3_image.resize((1280, 1300), Image.LANCZOS) 
-        self.body_frame_3_photo = ImageTk.PhotoImage(self.body_frame_3_resized)
-        self.body_frame_3_label = Label(self.window, image=self.body_frame_3_photo, bg='#EAE9E8')
-        self.body_frame_3_label.image = self.body_frame_3_photo
-        self.body_frame_3_label.place(x=328, y=495, width=600, height=220)
+        # adicionar notifitificações
+
+        self.notifications_frame = Frame(self.window, bg='#F4F4F4')
+        self.notifications_frame.place(x=1250, y=120, width=400, height=560)  
+
+        self.update_notifications()
 
         # =====================================SideBar=========================================
 
@@ -176,6 +182,23 @@ class PacienteView:
         login_window = Tk()
         LoginForm(login_window)
         login_window.mainloop()
+
+    def update_notifications(self):
+        notifications = get_notifications()
+
+        if not notifications:
+            no_data_label = Label(self.notifications_frame, text="Nenhuma notificação disponível.", bg='#F4F4F4', font=("yu gothic ui", 14))
+            no_data_label.pack(pady=20)
+            return
+
+        for notification in notifications:
+            notification_text = f"Paciente: {notification['paciente_nome']}\n" \
+                                f"Mensagem: {notification['mensagem']}\n" \
+                                f"Data: {notification['data_hora']}\n" \
+                                
+
+            notification_label = Label(self.notifications_frame, text=notification_text, bg='#F4F4F4', font=("yu gothic ui", 12), anchor='w', padx=8, pady=5)
+            notification_label.pack(fill=X, padx=8, pady=4)
 
 def page():
     window = Tk()

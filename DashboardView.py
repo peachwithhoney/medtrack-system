@@ -31,9 +31,9 @@ class Dashboard:
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
         self.header_image_label.image = photo
-        self.header_image_label.place(x=0, y=0, width=1366, height=80)
+        self.header_image_label.place(x=0, y=0, width=2366, height=80)
 
-        self.header_line = Canvas(self.window, width=1366, height=1, bg="#000000", highlightthickness=0)
+        self.header_line = Canvas(self.window, width=2600, height=1, bg="#000000", highlightthickness=0)
         self.header_line.place(x=0, y=82)
 
         # ============================Botão de Logout no Header============================
@@ -47,7 +47,7 @@ class Dashboard:
 
         # ================== SIDEBAR ===================================================
         self.sidebar = Frame(self.window, bg='#F4F4F4')
-        self.sidebar.place(x=0, y=85, width=300, height=750)
+        self.sidebar.place(x=0, y=85, width=300, height=1000)
 
         # ============= BODY ==========================================================
         
