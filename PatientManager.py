@@ -85,3 +85,32 @@ class PatientManager:
                     logging.info("Paciente deletado com sucesso!")
         except mysql.connector.Error as err:
             logging.error(f"Erro ao tentar deletar o paciente: {err}")
+
+    @staticmethod
+    def get_all_patients():
+        try:
+            with get_db_connection() as conn:
+                with get_cursor(conn) as cursor:
+                    query = "SELECT * FROM pacientes"
+                    cursor.execute(query)
+                    patients = cursor.fetchall()
+
+                    if patients:
+                        patient_list = []
+                        for patient in patients:
+                            patient_list.append({
+                                'id': patient[0],
+                                'nome': patient[1],
+                                'data_nascimento': patient[2],
+                                'cpf': patient[3],
+                                'endereco': patient[4],
+                                'telefone': patient[5],
+                                'email': patient[6]
+                            })
+                        return patient_list
+                    else:
+                        logging.info("Nenhum paciente encontrado.")
+                        return []
+        except mysql.connector.Error as err:
+            logging.error(f"Erro ao tentar buscar todos os pacientes: {err}")
+            return []
