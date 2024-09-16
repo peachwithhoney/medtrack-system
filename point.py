@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, query_data
+from db_operations import insert_data, update_data, execute_query
 
 def registrar_entrada(enfermeiro_id, data_hora_entrada):
     query = """
@@ -30,7 +30,7 @@ def consultar_ponto(ponto_id=None):
         query += " WHERE id = %s"
         params = (ponto_id,)
     
-    return query_data(query, params, fetch_one=(ponto_id is not None))
+    return execute_query(query, params, fetch_one=(ponto_id is not None))
 
 def relatorio_horas_trabalhadas(enfermeiro_id, data_inicio, data_fim):
     query = """
@@ -43,4 +43,4 @@ def relatorio_horas_trabalhadas(enfermeiro_id, data_inicio, data_fim):
         ORDER BY data_hora_entrada ASC
     """
     params = (enfermeiro_id, data_inicio, data_fim)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)

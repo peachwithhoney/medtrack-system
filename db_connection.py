@@ -3,11 +3,12 @@ from mysql.connector import Error
 from contextlib import contextmanager
 
 class RealDB:
-    def __init__(self, host, database, user, password):
+    def __init__(self, host, database, user, password, port=3306):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
+        self.port = port
         self.connection = None
 
     def connect(self):
@@ -16,7 +17,8 @@ class RealDB:
                 host=self.host,
                 database=self.database,
                 user=self.user,
-                password=self.password
+                password=self.password,
+                port=self.port
             )
             if self.connection.is_connected():
                 print("Conexão com o banco de dados estabelecida.")
@@ -42,7 +44,7 @@ class RealDB:
 
 @contextmanager
 def get_db_connection():
-    db = RealDB(host='localhost', database='db_medtrack', user='root', password='ventilador22')
+    db = RealDB(host='127.0.0.1', database='db_medtrack', user='root', password='ventilador22', port=3306)
     db.connect()
     try:
         yield db
@@ -52,3 +54,4 @@ def get_db_connection():
             db.connection.rollback()  
     finally:
         db.close()
+

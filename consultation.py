@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, query_data
+from db_operations import insert_data, update_data, execute_query
 
 def criar_consulta(paciente_id, medico_id, data_consulta, horario, motivo):
     query = """
@@ -47,7 +47,7 @@ def verificar_consulta(consulta_id=None):
         query += " WHERE id = %s"
         params = (consulta_id,)
     
-    return query_data(query, params, fetch_one=(consulta_id is not None))
+    return execute_query(query, params, fetch_one=(consulta_id is not None))
 
 def historico_consultas_paciente(paciente_id):
     query = """
@@ -58,7 +58,7 @@ def historico_consultas_paciente(paciente_id):
         ORDER BY c.data_consulta DESC, c.horario DESC
     """
     params = (paciente_id,)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)
 
 def historico_consultas_medico(medico_id):
     query = """
@@ -69,4 +69,4 @@ def historico_consultas_medico(medico_id):
         ORDER BY c.data_consulta DESC, c.horario DESC
     """
     params = (medico_id,)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)

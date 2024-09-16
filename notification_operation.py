@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, delete_data, query_data
+from db_operations import insert_data, update_data, delete_data, execute_query
 import logging
 
 def create_notification(paciente_id, medico_id, consulta_id, mensagem, data_hora, lida=False):
@@ -51,23 +51,32 @@ def delete_notification(notification_id):
         return False
 
 def get_notifications(paciente_id=None, medico_id=None, consulta_id=None):
-    query = "SELECT * FROM notificacoes WHERE 1=1"
+    query = """
+    SELECT n.id, n.mensagem, n.data_hora, n.lida, 
+           m.nome AS medico_nome, p.nome AS paciente_nome
+    FROM notificacoes n
+    LEFT JOIN medicos m ON n.medico_id = m.id
+    LEFT JOIN pacientes p ON n.paciente_id = p.id
+    WHERE 1=1
+    """
     params = []
     
     if paciente_id is not None:
-        query += " AND paciente_id = %s"
+        query += " AND n.paciente_id = %s"
         params.append(paciente_id)
     
     if medico_id is not None:
-        query += " AND medico_id = %s"
+        query += " AND n.medico_id = %s"
         params.append(medico_id)
     
     if consulta_id is not None:
-        query += " AND consulta_id = %s"
+        query += " AND n.consulta_id = %s"
         params.append(consulta_id)
     
     try:
-        return query_data(query, tuple(params))
+        notifications = execute_query(query, tuple(params), fetch_all=True)
+        return notifications if notifications is not None else []
     except Exception as e:
         logging.error(f"Erro ao buscar notificações: {e}")
         return []
+

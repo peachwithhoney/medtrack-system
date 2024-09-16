@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, query_data
+from db_operations import insert_data, update_data, execute_query
 
 def criar_exame(nome, descricao, paciente_id, medico_id, data_exame):
     query = """
@@ -47,7 +47,7 @@ def consultar_exame(exame_id=None):
         query += " WHERE id = %s"
         params = (exame_id,)
     
-    return query_data(query, params, fetch_one=(exame_id is not None))
+    return execute_query(query, params, fetch_one=(exame_id is not None))
 
 def registrar_resultado_exame(exame_id, resultado, observacoes):
     query = """
@@ -67,4 +67,4 @@ def consultar_resultados_paciente(paciente_id):
         ORDER BY e.data_exame DESC
     """
     params = (paciente_id,)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)

@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, query_data
+from db_operations import insert_data, update_data, execute_query
 
 def criar_tratamento(nome, descricao, duracao, medico_id):
     query = """
@@ -44,7 +44,7 @@ def consultar_tratamento(tratamento_id=None):
         query += " WHERE id = %s"
         params = (tratamento_id,)
     
-    return query_data(query, params, fetch_one=(tratamento_id is not None))
+    return execute_query(query, params, fetch_one=(tratamento_id is not None))
 
 def registrar_tratamento_paciente(paciente_id, tratamento_id, data_inicio, data_fim):
     query = """
@@ -64,7 +64,7 @@ def consultar_tratamentos_paciente(paciente_id):
         ORDER BY pt.data_inicio DESC
     """
     params = (paciente_id,)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)
 
 def consultar_pacientes_tratamento(tratamento_id):
     query = """
@@ -75,4 +75,4 @@ def consultar_pacientes_tratamento(tratamento_id):
         ORDER BY pt.data_inicio DESC
     """
     params = (tratamento_id,)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)

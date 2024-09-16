@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash
 import auth_services
 from db_operations import get_db_connection
 
-class PacienteView:
+class ConsultasView:
     def __init__(self, window):
         self.window = window
         self.window.title("Medtrack")
@@ -20,15 +20,15 @@ class PacienteView:
         self.window.iconphoto(True, icon)
 
         # ============================Header============================
-        self.header_image = Image.open('images/headbar_pacientes.png')
+        self.header_image = Image.open('images/headbar_consultas.png')
         self.header_image_resized = self.header_image.resize((1280, 600), Image.LANCZOS) 
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
         self.header_image_label.image = photo
         self.header_image_label.place(x=0, y=0, width=1366, height=80)
 
-        self.header_line = Canvas(self.window, width=1366, height=1, bg="#000000", highlightthickness=0)
-        self.header_line.place(x=0, y=82)
+        self.header_line = Canvas(self.window, width=1066, height=1, bg="#000000", highlightthickness=0)
+        self.header_line.place(x=300, y=82)
 
         # ============================Botão de Logout no Header============================
         self.lout_button_image = Image.open('images/button_logout.png')
@@ -41,7 +41,7 @@ class PacienteView:
 
         # ================== SIDEBAR ===================================================
         self.sidebar = Frame(self.window, bg='#F4F4F4')
-        self.sidebar.place(x=0, y=85, width=300, height=750)
+        self.sidebar.place(x=0, y=60, width=300, height=750)
 
         # ============= BODY ==========================================================
         
@@ -89,11 +89,11 @@ class PacienteView:
         self.Paciente_Image_photo = ImageTk.PhotoImage(self.Paciente_Image_resized)
         self.Paciente = Label(self.sidebar, image=self.Paciente_Image_photo, bg='#F4F4F4')
         self.Paciente.image = self.Paciente_Image_photo  
-        self.Paciente.place(x=70, y=55)
+        self.Paciente.place(x=40, y=55)
 
-        self.Paciente_text = Button(self.sidebar, text="Paciente", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0, fg='#FF914D',
+        self.Paciente_text = Button(self.sidebar, text="Paciente", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
                              cursor='hand2', activebackground='#F4F4F4')
-        self.Paciente_text.place(x=110, y=60)
+        self.Paciente_text.place(x=80, y=60)
         
         # Consultas
         self.Consultas_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -101,11 +101,11 @@ class PacienteView:
         self.Consultas_Image_photo = ImageTk.PhotoImage(self.Consultas_Image_resized)
         self.Consultas = Label(self.sidebar, image=self.Consultas_Image_photo, bg='#F4F4F4')
         self.Consultas.image = self.Consultas_Image_photo  
-        self.Consultas.place(x=40, y=95)
+        self.Consultas.place(x=70, y=95)
 
-        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
+        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0, fg='#FF914D',
                              cursor='hand2', activebackground='#F4F4F4')
-        self.Consultas_text.place(x=80, y=100)
+        self.Consultas_text.place(x=110, y=100)
         
         # Médicos
         self.Medicos_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -176,10 +176,11 @@ class PacienteView:
         login_window = Tk()
         LoginForm(login_window)
         login_window.mainloop()
+  
 
 def page():
     window = Tk()
-    PacienteView(window)
+    ConsultasView(window)
     window.mainloop()
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from db_operations import insert_data, update_data, query_data
+from db_operations import insert_data, update_data, execute_query
 
 def add_medicamento(nome, descricao, estoque, alerta_estoque):
     query = """
@@ -38,12 +38,13 @@ def get_medicamentos(medicamento_id=None):
     if medicamento_id is not None:
         query += " WHERE id = %s"
         params = (medicamento_id,)
-    
-    return query_data(query, params, fetch_one=(medicamento_id is not None))
+        return execute_query(query, params, fetch_all=False)  
+    else:
+        return execute_query(query, params, fetch_all=True)
 
 def check_estoque():
     query = "SELECT * FROM medicamentos WHERE estoque < alerta_estoque"
-    return query_data(query, fetch_all=True)
+    return execute_query(query, fetch_all=True)
 
 def create_prescricao(paciente_id, medico_id, medicamento_id, quantidade, data_prescricao):
     query = """
@@ -56,7 +57,7 @@ def create_prescricao(paciente_id, medico_id, medicamento_id, quantidade, data_p
 def search_medicamentos_by_name(name):
     query = "SELECT * FROM medicamentos WHERE nome LIKE %s"
     params = (f"%{name}%",)
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)
 
 def filter_medicamentos_by_estoque(min_estoque, max_estoque):
     query = "SELECT * FROM medicamentos WHERE 1=1"
@@ -70,9 +71,9 @@ def filter_medicamentos_by_estoque(min_estoque, max_estoque):
         query += " AND estoque <= %s"
         params.append(max_estoque)
 
-    return query_data(query, params, fetch_all=True)
+    return execute_query(query, params, fetch_all=True)
 
 def filter_medicamentos_by_alerta():
     query = "SELECT * FROM medicamentos WHERE estoque < alerta_estoque"
 
-    return query_data(query, fetch_all=True)
+    return execute_query(query, fetch_all=True)

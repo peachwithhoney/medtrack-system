@@ -5,12 +5,16 @@ from tkinter import messagebox
 from werkzeug.security import check_password_hash
 import auth_services
 from db_operations import get_db_connection
+from DashboardView import Dashboard
 
 class LoginForm:
     def __init__(self, window):
         self.window = window
-        self.window.geometry("1166x718")
+        self.window.title("Medtrack")
+        self.window.geometry("1366x768")
+        self.window.resizable(0, 0)
         self.window.state('zoomed')
+        self.window.config(background='#EAE9E8')
 
         # ============================Window Icon============================
         icon = PhotoImage(file='images/image_logo_1.png')
@@ -96,8 +100,11 @@ class LoginForm:
                 messagebox.showerror("Erro", "Senha incorreta")
                 return
 
-            messagebox.showinfo("Sucesso", f"Bem-vindo {user['nome']}!")
-        
+            self.window.destroy()
+            dashboard_window = Tk()
+            Dashboard(dashboard_window)
+            dashboard_window.mainloop()
+
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
 
