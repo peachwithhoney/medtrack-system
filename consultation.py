@@ -1,72 +1,88 @@
-from db_operations import insert_data, update_data, execute_query
+from mysql.connector import Error
+import logging
+from contextlib import contextmanager
+from db_connection import get_db_connection
 
-def criar_consulta(paciente_id, medico_id, data_consulta, horario, motivo):
-    query = """
-        INSERT INTO consultas (paciente_id, medico_id, data_consulta, horario, motivo)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    params = (paciente_id, medico_id, data_consulta, horario, motivo)
-    insert_data(query, params)
+logging.basicConfig(level=logging.INFO)
 
-def atualizar_consulta(consulta_id, paciente_id=None, medico_id=None, data_consulta=None, horario=None, motivo=None):
-    update_fields = []
-    params = []
-    
-    if paciente_id is not None:
-        update_fields.append("paciente_id = %s")
-        params.append(paciente_id)
-    if medico_id is not None:
-        update_fields.append("medico_id = %s")
-        params.append(medico_id)
-    if data_consulta is not None:
-        update_fields.append("data_consulta = %s")
-        params.append(data_consulta)
-    if horario is not None:
-        update_fields.append("horario = %s")
-        params.append(horario)
-    if motivo is not None:
-        update_fields.append("motivo = %s")
-        params.append(motivo)
-    
-    params.append(consulta_id)
-    update_string = ", ".join(update_fields)
-    query = f"UPDATE consultas SET {update_string} WHERE id = %s"
-    
-    update_data(query, params)
+@contextmanager
+def get_cursor(conn):
+    cursor = conn.cursor()
+    try:
+        yield cursor
+    finally:
+        cursor.close()
 
-def cancelar_consulta(consulta_id):
-    query = "DELETE FROM consultas WHERE id = %s"
-    params = (consulta_id,)
-    update_data(query, params)
+class ConsultationManager:
+    from db_connection import RealDB, get_db_connection
 
-def verificar_consulta(consulta_id=None):
-    query = "SELECT * FROM consultas"
-    params = ()
-    
-    if consulta_id is not None:
-        query += " WHERE id = %s"
+class ConsultationManager:
+    @staticmethod
+    def create_consultation(paciente_id, medico_id, data_hora_consulta, observacoes):
+        query = """
+        INSERT INTO consultas (paciente_ID, medico_ID, data_hora, observacoes) 
+        VALUES (%s, %s, %s, %s)
+        """
+        params = (paciente_id, medico_id, data_hora_consulta, observacoes)
+        with get_db_connection() as db:
+            db.query(query, params)
+            try:
+                db.query(query, params)
+                db.connection.commit() 
+                print("Consulta inserida com sucesso!")
+            except Error as e:
+                print(f"Erro ao inserir consulta: {e}")
+                db.connection.rollback()
+
+    @staticmethod
+    def read_consultation(consulta_id):
+        query = "SELECT * FROM consultas WHERE id = %s"
         params = (consulta_id,)
-    
-    return execute_query(query, params, fetch_one=(consulta_id is not None))
+        with get_db_connection() as db:
+            result = db.query(query, params)
+            if result:
+                return result[0]  
+            else:
+                logging.info("Consulta não encontrada.")
+                return None
 
-def historico_consultas_paciente(paciente_id):
-    query = """
-        SELECT c.id, c.data_consulta, c.horario, c.motivo, m.nome AS nome_medico
-        FROM consultas c
-        JOIN medicos m ON c.medico_id = m.id
-        WHERE c.paciente_id = %s
-        ORDER BY c.data_consulta DESC, c.horario DESC
-    """
-    params = (paciente_id,)
-    return execute_query(query, params, fetch_all=True)
+    @staticmethod
+    def update_consultation(consulta_id, paciente_id, medico_id, data_consulta, hora_consulta, observacoes):
+        query = """
+        UPDATE consultas
+        SET paciente_id = %s, medico_id = %s, data_consulta = %s, hora_consulta = %s, observacoes = %s
+        WHERE id = %s
+        """
+        params = (paciente_id, medico_id, data_consulta, hora_consulta, observacoes, consulta_id)
+        with get_db_connection() as db:
+            db.query(query, params)
+            db.connection.commit()
+            logging.info("Consulta atualizada com sucesso!")
 
-def historico_consultas_medico(medico_id):
-    query = """
-        SELECT c.id, c.data_consulta, c.horario, c.motivo, p.nome AS nome_paciente
-        FROM consultas c
-        JOIN pacientes p ON c.paciente_id = p.id
-        WHERE c.medico_id = %s
-        ORDER BY c.data_consulta DESC, c.horario DESC
-    """
-    params = (medico_id,)
-    return execute_query(query, params, fetch_all=True)
+    @staticmethod
+    def delete_consultation(consulta_id):
+
+        query = "DELETE FROM consultas WHERE id = %s"
+        params = (consulta_id,)
+        
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)  
+                db.connection.commit() 
+                logging.info("Consulta deletada com sucesso!")
+                print("Consulta deletada com sucesso!") 
+        except Error as e:
+            logging.error(f"Erro ao deletar consulta: {e}")
+            print(f"Erro ao deletar consulta: {e}")
+            if db.connection:
+                db.connection.rollback()
+
+    @staticmethod
+    def get_all_consultations():
+        query = "SELECT * FROM consultas"
+        with get_db_connection() as db:
+            result = db.query(query)
+            if result is not None:
+                return result
+            return []
+

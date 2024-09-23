@@ -1,15 +1,13 @@
-import requests
 from tkinter import *
 from tkinter import ttk, simpledialog, messagebox
 from PIL import ImageTk, Image
 from tkinter import messagebox
-from datetime import datetime, timedelta
-from db_connection import RealDB
-from consultation import ConsultationManager
-from datetime import datetime
+from notification_operation import get_notifications
+import tkinter as tk
+from doctorManager import MedicoManager
 
 
-class ConsultasView:
+class MedicosView:
     def __init__(self, window):
         self.window = window
         self.window.title("Medtrack")
@@ -23,7 +21,7 @@ class ConsultasView:
         self.window.iconphoto(True, icon)
 
         # ============================Header============================
-        self.header_image = Image.open('images/headbar_consultas.png')
+        self.header_image = Image.open('images/headbar_medicos.png')
         self.header_image_resized = self.header_image.resize((1366, 600), Image.LANCZOS) 
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
@@ -44,7 +42,25 @@ class ConsultasView:
 
         # ================== SIDEBAR ===================================================
         self.sidebar = Frame(self.window, bg='#F4F4F4')
-        self.sidebar.place(x=0, y=60, width=300, height=750)
+        self.sidebar.place(x=0, y=85, width=300, height=1000)
+
+        # ============= BODY ==========================================================
+        
+        # body frame 1
+        self.body_frame_1_label = Label(self.window, bg='#EAE9E8')
+        self.body_frame_1_label.place(x=328, y=110, width=1000, height=350)
+
+        self.add_button = Button(self.window, text="Adicionar Médico", command=self.add_medico, font=("Arial", 12), bg="#4CAF50", fg="white")
+        self.add_button.place(x=330, y=470, width=150, height=40)
+        
+        self.del_button = Button(self.window, text="Excluir Médico", command=self.del_medico, font=("Arial", 12), bg="#FF6347", fg="white")
+        self.del_button.place(x=500, y=470, width=150, height=40)
+
+        # Médicos Cadastrados
+
+        self.display_medico()
+
+        # =====================================SideBar=========================================
 
         # Dashboard
         self.dashboard_Image = Image.open('images/Dashboard_Icon.png')
@@ -67,7 +83,7 @@ class ConsultasView:
         self.Paciente.place(x=40, y=55)
 
         self.Paciente_text = Button(self.sidebar, text="Paciente", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4', command=self.open_pacient)
+                             cursor='hand2', activebackground='#F4F4F4')
         self.Paciente_text.place(x=80, y=60)
         
         # Consultas
@@ -76,11 +92,11 @@ class ConsultasView:
         self.Consultas_Image_photo = ImageTk.PhotoImage(self.Consultas_Image_resized)
         self.Consultas = Label(self.sidebar, image=self.Consultas_Image_photo, bg='#F4F4F4')
         self.Consultas.image = self.Consultas_Image_photo  
-        self.Consultas.place(x=70, y=95)
+        self.Consultas.place(x=40, y=95)
 
-        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,fg='#FF914D',
+        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_consulta)
-        self.Consultas_text.place(x=110, y=100)
+        self.Consultas_text.place(x=80, y=100)
         
         # Médicos
         self.Medicos_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -88,11 +104,11 @@ class ConsultasView:
         self.Medicos_Image_photo = ImageTk.PhotoImage(self.Medicos_Image_resized)
         self.Medicos = Label(self.sidebar, image=self.Medicos_Image_photo, bg='#F4F4F4')
         self.Medicos.image = self.Medicos_Image_photo  
-        self.Medicos.place(x=40, y=135)
+        self.Medicos.place(x=70, y=135)
 
-        self.Medicos_text = Button(self.sidebar, text="Médicos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
+        self.Medicos_text = Button(self.sidebar, text="Médicos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,fg='#FF914D',
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_medicos)
-        self.Medicos_text.place(x=80, y=140)
+        self.Medicos_text.place(x=110, y=140)
         
         # Exames
         self.Exames_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -140,123 +156,120 @@ class ConsultasView:
 
         self.Farmacia_text = Button(self.sidebar, text="Farmacia", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_medicamento)
-        self.Farmacia_text.place(x=80, y=300)     
+        self.Farmacia_text.place(x=80, y=300)             
 
-        # ================== Body ===================================================
-        self.body_frame_1_label = Label(self.window, bg='#EAE9E8')
-        self.body_frame_1_label.place(x=328, y=110, width=1000, height=350)
-
-        self.add_button = Button(self.window, text="Adicionar Consulta", command=self.add_consulta, font=("Arial", 12), bg="#4CAF50", fg="white")
-        self.add_button.place(x=330, y=470, width=150, height=40)
-        
-        self.del_button = Button(self.window, text="Excluir Consulta", command=self.del_consulta, font=("Arial", 12), bg="#FF6347", fg="white")
-        self.del_button.place(x=500, y=470, width=150, height=40)
-
-        # Adicionando as consultas futuras
-
-        self.display_upcoming_consultas()
-
-    def display_upcoming_consultas(self):
-        if hasattr(self, 'consulta_table'):
-            self.consulta_table.destroy()
-
-        consultas = ConsultationManager.get_all_consultations()
-        if not consultas:
-            messagebox.showinfo("Informação", "Nenhuma consulta encontrada para os próximos dias.")
-            return
-
-        columns = ('id', 'paciente_id', 'medico_id', 'data_hora', 'observacoes')
-        self.consulta_table = ttk.Treeview(self.body_frame_1_label, columns=columns, show='headings')
-        self.consulta_table.heading('id', text='ID')
-        self.consulta_table.heading('paciente_id', text='Paciente ID')
-        self.consulta_table.heading('medico_id', text='Médico ID')
-        self.consulta_table.heading("data_hora", text="Data/Hora")
-        self.consulta_table.heading('observacoes', text='Observações')
-        self.consulta_table.place(x=20, y=20, width=800, height=300)
-
-        for consulta in consultas:
-            values = (
-                consulta.get('id', ''),
-                consulta.get('paciente_id', ''),
-                consulta.get('medico_id', ''),
-                consulta.get('data_hora', ''),
-                consulta.get('observacoes', '')
-            )
-            self.consulta_table.insert('', 'end', values=values)
-
-
-    def add_consulta(self):
-        add_window = Toplevel(self.window)
-        add_window.title("Adicionar Consulta")
-        add_window.geometry("400x300")
-        add_window.config(background='#EAE9E8')
-
-        Label(add_window, text="Paciente ID", bg='#EAE9E8').place(x=20, y=20)
-        paciente_id_entry = Entry(add_window)
-        paciente_id_entry.place(x=150, y=20)
-
-        Label(add_window, text="Médico ID", bg='#EAE9E8').place(x=20, y=60)
-        medico_id_entry = Entry(add_window)
-        medico_id_entry.place(x=150, y=60)
-
-        Label(add_window, text="Data/Hora", bg='#EAE9E8').place(x=20, y=100)
-        data_hora_consulta_entry = Entry(add_window)
-        data_hora_consulta_entry.place(x=150, y=100)
-
-        Label(add_window, text="Observações", bg='#EAE9E8').place(x=20, y=180)
-        observacoes_entry = Entry(add_window)
-        observacoes_entry.place(x=150, y=180)
-
-        def is_valid_datetime(date_str):
-            try:
-                datetime.strptime(date_str, '%Y-%m-%d %H:%M')
-                return True
-            except ValueError:
-                return False
-
-        def submit_consulta():
-            paciente_id = paciente_id_entry.get()
-            medico_id = medico_id_entry.get()
-            data_hora_consulta = data_hora_consulta_entry.get()
-            observacoes = observacoes_entry.get()
-
-            if not paciente_id or not medico_id or not data_hora_consulta or not observacoes:
-                messagebox.showerror("Erro", "Preencha todos os campos.")
-            elif not is_valid_datetime(data_hora_consulta):
-                messagebox.showerror("Erro", "Data e hora inválidas. Use o formato 'YYYY-MM-DD HH:MM'.")
-            else:
-                try:
-                    ConsultationManager.create_consultation(
-                        paciente_id=paciente_id, 
-                        medico_id=medico_id, 
-                        data_hora_consulta=data_hora_consulta, 
-                        observacoes=observacoes
-                    )
-                    messagebox.showinfo("Consulta", "Consulta criada com sucesso!")
-                    add_window.destroy()
-                    self.display_upcoming_consultas()
-                except Exception as e:
-                    messagebox.showerror("Erro", f"Erro ao criar consulta: {e}")
-
-        Button(add_window, text="Adicionar", command=submit_consulta, bg="#4CAF50", fg="white").place(x=150, y=230, width=100, height=30)
-
-    def del_consulta(self):
-        consulta_id = simpledialog.askinteger("Excluir Consulta", "Digite o ID da consulta a ser excluída:")
-
-        if consulta_id is not None:
-                ConsultationManager.delete_consultation(consulta_id)
-                messagebox.showinfo("Consulta", "Consulta excluída com sucesso!")
-                self.display_upcoming_consultas()
-        else:
-            messagebox.showinfo("Erro", "Nenhum ID foi fornecido.")
-
+    
     def logout(self):
         messagebox.showinfo("Logout", "Você saiu com sucesso!")
         self.window.destroy()
+    
         from LoginView import LoginForm  
         login_window = Tk()
         LoginForm(login_window)
         login_window.mainloop()
+
+
+    def display_medico(self):
+        if hasattr(self, 'medico_table'):
+            self.medico_table.destroy()
+
+        medicos = MedicoManager.get_all_medicos()
+        if not medicos:
+            messagebox.showinfo("Informação", "Nenhum médico encontrado no sistema.")
+            return
+
+        columns = ('id', 'nome', 'crm', 'cpf', 'especialidade_id', 'telefone', 'email')
+        self.medico_table = ttk.Treeview(self.body_frame_1_label, columns=columns, show='headings')
+        self.medico_table.heading('id', text='ID')
+        self.medico_table.heading('nome', text='Nome')
+        self.medico_table.heading('crm', text='CRM')
+        self.medico_table.heading('cpf', text='CPF')
+        self.medico_table.heading('especialidade_id', text='Especialidade')
+        self.medico_table.heading('telefone', text='Telefone')
+        self.medico_table.heading('email', text='Email')
+        self.medico_table.place(x=20, y=20, width=800, height=300)
+
+        for medico in medicos:
+            values = (
+                medico.get('id', ''),
+                medico.get('nome', ''),
+                medico.get('crm', ''),
+                medico.get('cpf', ''),
+                medico.get('especialidade_id', ''),
+                medico.get('telefone', ''),
+                medico.get('email', '')
+                )
+            self.medico_table.insert('', 'end', values=values)
+
+
+    def add_medico(self):
+        add_window = Toplevel(self.window)
+        add_window.title("Adicionar Médico")
+        add_window.geometry("400x300")
+        add_window.config(background='#EAE9E8')
+
+        Label(add_window, text="Nome", bg='#EAE9E8').place(x=20, y=20)
+        nome_entry = Entry(add_window)
+        nome_entry.place(x=150, y=20)
+
+        Label(add_window, text="CRM", bg='#EAE9E8').place(x=20, y=60)
+        crm_entry = Entry(add_window)
+        crm_entry.place(x=150, y=60)
+
+        Label(add_window, text="CPF", bg='#EAE9E8').place(x=20, y=100)
+        cpf_entry = Entry(add_window)
+        cpf_entry.place(x=150, y=100)
+
+        Label(add_window, text="Especialidade", bg='#EAE9E8').place(x=20, y=140)
+        especialidade_entry = Entry(add_window)
+        especialidade_entry.place(x=150, y=140)
+
+        Label(add_window, text="Telefone", bg='#EAE9E8').place(x=20, y=180)
+        telefone_entry = Entry(add_window)
+        telefone_entry.place(x=150, y=180)
+
+        Label(add_window, text="Email", bg='#EAE9E8').place(x=20, y=220)
+        email_entry = Entry(add_window)
+        email_entry.place(x=150, y=220)
+
+
+        def submit_medico():
+            nome = nome_entry.get()
+            crm = crm_entry.get()
+            cpf = cpf_entry.get()
+            especialidade_id = especialidade_entry.get()
+            telefone = telefone_entry.get()
+            email = email_entry.get()
+
+            if not nome or not crm or not cpf or not especialidade_id or not telefone or not email:
+                messagebox.showerror("Erro", "Preencha todos os campos.")
+            else:
+                try:
+                    MedicoManager.create_paciente(
+                        nome=nome, 
+                        crm=crm, 
+                        cpf=cpf, 
+                        especialidade_id=especialidade_id,
+                        telefone=telefone,
+                        email=email
+                    )
+                    messagebox.showinfo("Médico", "Médico cadastrado com sucesso!")
+                    add_window.destroy()
+                    self.display_medico()
+                except Exception as e:
+                    messagebox.showerror("Erro", f"Erro ao cadastrar médico: {e}")
+
+        Button(add_window, text="Adicionar", command=submit_medico, bg="#4CAF50", fg="white").place(x=150, y=260, width=100, height=30)
+
+    def del_medico(self):
+        medico_id = simpledialog.askinteger("Excluir Médico", "Digite o ID do médico a ser excluído:")
+
+        if medico_id is not None:
+                MedicoManager.delete_medico(medico_id)
+                messagebox.showinfo("Médico", "Médico excluído com sucesso!")
+                self.display_paciente()
+        else:
+            messagebox.showinfo("Erro", "Nenhum ID foi fornecido.")
 
     def open_dashboard(self):
         self.window.destroy()
@@ -316,10 +329,11 @@ class ConsultasView:
         from MedicosView import MedicosView
         medicos_window = Tk()
         MedicosView(medicos_window)
-        
+
+
 def page():
     window = Tk()
-    ConsultasView(window)
+    MedicosView(window)
     window.mainloop()
 
 if __name__ == "__main__":

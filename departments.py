@@ -1,75 +1,78 @@
-import mysql.connector
+from mysql.connector import Error
 import logging
 from contextlib import contextmanager
-import db_connection
+from db_connection import get_db_connection
 
 logging.basicConfig(level=logging.INFO)
 
-@contextmanager
-def get_cursor(conn):
-    cursor = conn.cursor()
-    try:
-        yield cursor
-    finally:
-        cursor.close()
-
-class DepartmentManager:
+class DepartamentoManager:
+    
     @staticmethod
-    def create_department(nome, descricao):
+    def create_departamento(nome, localizacao, recursos):
+        query = """
+        INSERT INTO departamentos (nome, localizacao, recursos) 
+        VALUES (%s, %s, %s)
+        """
+        params = (nome, localizacao, recursos)
         try:
-            with db_connection() as conn:
-                with get_cursor(conn) as cursor:
-                    query = """
-                    INSERT INTO departamentos (nome, descricao)
-                    VALUES (%s, %s)
-                    """
-                    cursor.execute(query, (nome, descricao))
-                    conn.commit()
-                    logging.info("Departmento criado com sucesso!")
-        except mysql.connector.Error as err:
-            logging.error(f"Erro ao tentar criar o departamento : {err}")
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Departamento inserido com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao inserir departamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
     @staticmethod
-    def read_departments():
+    def read_departamento(departamento_id):
+        query = "SELECT * FROM departamentos WHERE id = %s"
+        params = (departamento_id,)
+        with get_db_connection() as db:
+            result = db.query(query, params)
+            if result:
+                return result[0]
+            else:
+                logging.info("Departamento não encontrado.")
+                return None
+
+    @staticmethod
+    def update_departamento(departamento_id, nome, localizacao, recursos):
+        query = """
+        UPDATE departamentos
+        SET nome = %s, localizacao = %s, recursos = %s
+        WHERE id = %s
+        """
+        params = (nome, localizacao, recursos, departamento_id)
         try:
-            with db_connection() as conn:
-                with get_cursor(conn) as cursor:
-                    query = "SELECT * FROM departamentos"
-                    cursor.execute(query)
-                    departments = cursor.fetchall()
-                    return departments
-        except mysql.connector.Error as err:
-            logging.error(f"Erro ao tentar visualizar o departamento : {err}")
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Departamento atualizado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao atualizar departamento: {e}")
+            if db.connection:
+                db.connection.rollback()
+
+    @staticmethod
+    def delete_departamento(departamento_id):
+        query = "DELETE FROM departamentos WHERE id = %s"
+        params = (departamento_id,)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Departamento deletado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao deletar departamento: {e}")
+            if db.connection:
+                db.connection.rollback()
+
+    @staticmethod
+    def get_all_departamentos():
+        query = "SELECT * FROM departamentos"
+        with get_db_connection() as db:
+            result = db.query(query)
+            if result is not None:
+                return result
             return []
-
-    @staticmethod
-    def update_department(id, new_nome, new_descricao):
-        try:
-            with db_connection() as conn:
-                with get_cursor(conn) as cursor:
-                    query = """
-                    UPDATE departamentos
-                    SET nome = %s, descricao = %s
-                    WHERE id = %s
-                    """
-                    cursor.execute(query, (new_nome, new_descricao, id))
-                    conn.commit()
-                    logging.info("Departmento atualizado com sucesso!")
-        except mysql.connector.Error as err:
-            logging.error(f"Erro ao tentar atualizar o departamento: {err}")
-
-    @staticmethod
-    def delete_department(id, user_is_admin):
-        if not user_is_admin:
-            logging.warning("Permissão negada: usuário não é administrador.")
-            return
-
-        try:
-            with db_connection() as conn:
-                with get_cursor(conn) as cursor:
-                    query = "DELETE FROM departamentos WHERE id = %s"
-                    cursor.execute(query, (id,))
-                    conn.commit()
-                    logging.info("Departmento deletado com sucesso")
-        except mysql.connector.Error as err:
-            logging.error(f"Erro ao tentar deletar o departamento : {err}")

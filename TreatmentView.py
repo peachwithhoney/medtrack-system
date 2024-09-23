@@ -1,15 +1,13 @@
-import requests
 from tkinter import *
 from tkinter import ttk, simpledialog, messagebox
 from PIL import ImageTk, Image
 from tkinter import messagebox
-from datetime import datetime, timedelta
-from db_connection import RealDB
-from consultation import ConsultationManager
-from datetime import datetime
+from notification_operation import get_notifications
+import tkinter as tk
+from treatment import TratamentoManager
 
 
-class ConsultasView:
+class TratamentoView:
     def __init__(self, window):
         self.window = window
         self.window.title("Medtrack")
@@ -23,7 +21,7 @@ class ConsultasView:
         self.window.iconphoto(True, icon)
 
         # ============================Header============================
-        self.header_image = Image.open('images/headbar_consultas.png')
+        self.header_image = Image.open('images/tratamentos_head.png')
         self.header_image_resized = self.header_image.resize((1366, 600), Image.LANCZOS) 
         photo = ImageTk.PhotoImage(self.header_image)
         self.header_image_label = Label(self.window, image=photo, bg='#F4F4F4')
@@ -44,7 +42,25 @@ class ConsultasView:
 
         # ================== SIDEBAR ===================================================
         self.sidebar = Frame(self.window, bg='#F4F4F4')
-        self.sidebar.place(x=0, y=60, width=300, height=750)
+        self.sidebar.place(x=0, y=85, width=300, height=1000)
+
+        # ============= BODY ==========================================================
+        
+        # body frame 1
+        self.body_frame_1_label = Label(self.window, bg='#EAE9E8')
+        self.body_frame_1_label.place(x=328, y=110, width=1000, height=350)
+
+        self.add_button = Button(self.window, text="Adicionar Tratamento", command=self.add_tratamento, font=("Arial", 12), bg="#4CAF50", fg="white")
+        self.add_button.place(x=330, y=470, width=150, height=40)
+        
+        self.del_button = Button(self.window, text="Excluir Tratamento", command=self.del_tratamento, font=("Arial", 12), bg="#FF6347", fg="white")
+        self.del_button.place(x=500, y=470, width=150, height=40)
+
+        # Tratamentos Cadastrados
+
+        self.display_tratamento()
+
+        # =====================================SideBar=========================================
 
         # Dashboard
         self.dashboard_Image = Image.open('images/Dashboard_Icon.png')
@@ -67,7 +83,7 @@ class ConsultasView:
         self.Paciente.place(x=40, y=55)
 
         self.Paciente_text = Button(self.sidebar, text="Paciente", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4', command=self.open_pacient)
+                             cursor='hand2', activebackground='#F4F4F4')
         self.Paciente_text.place(x=80, y=60)
         
         # Consultas
@@ -76,11 +92,11 @@ class ConsultasView:
         self.Consultas_Image_photo = ImageTk.PhotoImage(self.Consultas_Image_resized)
         self.Consultas = Label(self.sidebar, image=self.Consultas_Image_photo, bg='#F4F4F4')
         self.Consultas.image = self.Consultas_Image_photo  
-        self.Consultas.place(x=70, y=95)
+        self.Consultas.place(x=40, y=95)
 
-        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,fg='#FF914D',
+        self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), 
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_consulta)
-        self.Consultas_text.place(x=110, y=100)
+        self.Consultas_text.place(x=80, y=100)
         
         # Médicos
         self.Medicos_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -90,7 +106,7 @@ class ConsultasView:
         self.Medicos.image = self.Medicos_Image_photo  
         self.Medicos.place(x=40, y=135)
 
-        self.Medicos_text = Button(self.sidebar, text="Médicos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
+        self.Medicos_text = Button(self.sidebar, text="Médicos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,fg='#FF914D',
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_medicos)
         self.Medicos_text.place(x=80, y=140)
         
@@ -112,11 +128,11 @@ class ConsultasView:
         self.Tratamentos_Image_photo = ImageTk.PhotoImage(self.Tratamentos_Image_resized)
         self.Tratamentos = Label(self.sidebar, image=self.Tratamentos_Image_photo, bg='#F4F4F4')
         self.Tratamentos.image = self.Tratamentos_Image_photo  
-        self.Tratamentos.place(x=40, y=215)
+        self.Tratamentos.place(x=70, y=215)
 
         self.Tratamentos_text = Button(self.sidebar, text="Tratamentos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_tratamento)
-        self.Tratamentos_text.place(x=80, y=220)
+        self.Tratamentos_text.place(x=110, y=220)
         
         # Cirurgias
         self.Cirurgias_Image = Image.open('images/Icon_Dashboard_Button.png')
@@ -140,123 +156,136 @@ class ConsultasView:
 
         self.Farmacia_text = Button(self.sidebar, text="Farmacia", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
                              cursor='hand2', activebackground='#F4F4F4', command=self.open_medicamento)
-        self.Farmacia_text.place(x=80, y=300)     
+        self.Farmacia_text.place(x=80, y=300)        
 
-        # ================== Body ===================================================
-        self.body_frame_1_label = Label(self.window, bg='#EAE9E8')
-        self.body_frame_1_label.place(x=328, y=110, width=1000, height=350)
-
-        self.add_button = Button(self.window, text="Adicionar Consulta", command=self.add_consulta, font=("Arial", 12), bg="#4CAF50", fg="white")
-        self.add_button.place(x=330, y=470, width=150, height=40)
-        
-        self.del_button = Button(self.window, text="Excluir Consulta", command=self.del_consulta, font=("Arial", 12), bg="#FF6347", fg="white")
-        self.del_button.place(x=500, y=470, width=150, height=40)
-
-        # Adicionando as consultas futuras
-
-        self.display_upcoming_consultas()
-
-    def display_upcoming_consultas(self):
-        if hasattr(self, 'consulta_table'):
-            self.consulta_table.destroy()
-
-        consultas = ConsultationManager.get_all_consultations()
-        if not consultas:
-            messagebox.showinfo("Informação", "Nenhuma consulta encontrada para os próximos dias.")
-            return
-
-        columns = ('id', 'paciente_id', 'medico_id', 'data_hora', 'observacoes')
-        self.consulta_table = ttk.Treeview(self.body_frame_1_label, columns=columns, show='headings')
-        self.consulta_table.heading('id', text='ID')
-        self.consulta_table.heading('paciente_id', text='Paciente ID')
-        self.consulta_table.heading('medico_id', text='Médico ID')
-        self.consulta_table.heading("data_hora", text="Data/Hora")
-        self.consulta_table.heading('observacoes', text='Observações')
-        self.consulta_table.place(x=20, y=20, width=800, height=300)
-
-        for consulta in consultas:
-            values = (
-                consulta.get('id', ''),
-                consulta.get('paciente_id', ''),
-                consulta.get('medico_id', ''),
-                consulta.get('data_hora', ''),
-                consulta.get('observacoes', '')
-            )
-            self.consulta_table.insert('', 'end', values=values)
-
-
-    def add_consulta(self):
-        add_window = Toplevel(self.window)
-        add_window.title("Adicionar Consulta")
-        add_window.geometry("400x300")
-        add_window.config(background='#EAE9E8')
-
-        Label(add_window, text="Paciente ID", bg='#EAE9E8').place(x=20, y=20)
-        paciente_id_entry = Entry(add_window)
-        paciente_id_entry.place(x=150, y=20)
-
-        Label(add_window, text="Médico ID", bg='#EAE9E8').place(x=20, y=60)
-        medico_id_entry = Entry(add_window)
-        medico_id_entry.place(x=150, y=60)
-
-        Label(add_window, text="Data/Hora", bg='#EAE9E8').place(x=20, y=100)
-        data_hora_consulta_entry = Entry(add_window)
-        data_hora_consulta_entry.place(x=150, y=100)
-
-        Label(add_window, text="Observações", bg='#EAE9E8').place(x=20, y=180)
-        observacoes_entry = Entry(add_window)
-        observacoes_entry.place(x=150, y=180)
-
-        def is_valid_datetime(date_str):
-            try:
-                datetime.strptime(date_str, '%Y-%m-%d %H:%M')
-                return True
-            except ValueError:
-                return False
-
-        def submit_consulta():
-            paciente_id = paciente_id_entry.get()
-            medico_id = medico_id_entry.get()
-            data_hora_consulta = data_hora_consulta_entry.get()
-            observacoes = observacoes_entry.get()
-
-            if not paciente_id or not medico_id or not data_hora_consulta or not observacoes:
-                messagebox.showerror("Erro", "Preencha todos os campos.")
-            elif not is_valid_datetime(data_hora_consulta):
-                messagebox.showerror("Erro", "Data e hora inválidas. Use o formato 'YYYY-MM-DD HH:MM'.")
-            else:
-                try:
-                    ConsultationManager.create_consultation(
-                        paciente_id=paciente_id, 
-                        medico_id=medico_id, 
-                        data_hora_consulta=data_hora_consulta, 
-                        observacoes=observacoes
-                    )
-                    messagebox.showinfo("Consulta", "Consulta criada com sucesso!")
-                    add_window.destroy()
-                    self.display_upcoming_consultas()
-                except Exception as e:
-                    messagebox.showerror("Erro", f"Erro ao criar consulta: {e}")
-
-        Button(add_window, text="Adicionar", command=submit_consulta, bg="#4CAF50", fg="white").place(x=150, y=230, width=100, height=30)
-
-    def del_consulta(self):
-        consulta_id = simpledialog.askinteger("Excluir Consulta", "Digite o ID da consulta a ser excluída:")
-
-        if consulta_id is not None:
-                ConsultationManager.delete_consultation(consulta_id)
-                messagebox.showinfo("Consulta", "Consulta excluída com sucesso!")
-                self.display_upcoming_consultas()
-        else:
-            messagebox.showinfo("Erro", "Nenhum ID foi fornecido.")
-
+    
     def logout(self):
         messagebox.showinfo("Logout", "Você saiu com sucesso!")
         self.window.destroy()
+    
         from LoginView import LoginForm  
         login_window = Tk()
         LoginForm(login_window)
         login_window.mainloop()
+
+
+    def display_tratamento(self):
+        if hasattr(self, 'tratamento_table'):
+            self.tratamento_table.destroy()
+
+        tratamentos = TratamentoManager.get_all_tratamentos()
+        if not tratamentos:
+            messagebox.showinfo("Informação", "Nenhum tratamento encontrado no sistema.")
+            return
+
+        columns = ('id', 'paciente_id', 'enfermeiro_id', 'tipo_tratamento', 'data_inicio', 'data_fim', 'custos', 'resultados', 'observacoes')
+        self.tratamento_table = ttk.Treeview(self.body_frame_1_label, columns=columns, show='headings')
+        self.tratamento_table.heading('id', text='ID')
+        self.tratamento_table.heading('paciente_id', text='Paciente')
+        self.tratamento_table.heading('enfermeiro_id', text='Enfermeiro')
+        self.tratamento_table.heading('tipo_tratamento', text='Tipo de Tratamento')
+        self.tratamento_table.heading('data_inicio', text='Data Início')
+        self.tratamento_table.heading('data_fim', text='Data Fim')
+        self.tratamento_table.heading('custos', text='Custos')
+        self.tratamento_table.heading('resultados', text='Resultados')
+        self.tratamento_table.heading('observacoes', text='Observações')
+        self.tratamento_table.place(x=20, y=20, width=800, height=300)
+
+        for tratamento in tratamentos:
+            values = (
+                tratamento.get('id', ''),
+                tratamento.get('paciente_id', ''),
+                tratamento.get('enfermeiro_id', ''),
+                tratamento.get('tipo_tratamento', ''),
+                tratamento.get('data_inicio', ''),
+                tratamento.get('data_fim', ''),
+                tratamento.get('custos', ''),
+                tratamento.get('resultados', ''),
+                tratamento.get('observacoes', '')
+                )
+            self.tratamento_table.insert('', 'end', values=values)
+
+
+    def add_tratamento(self):
+        add_window = Toplevel(self.window)
+        add_window.title("Adicionar Tratamentos")
+        add_window.geometry("400x300")
+        add_window.config(background='#EAE9E8')
+
+        Label(add_window, text="Paciente", bg='#EAE9E8').place(x=20, y=20)
+        paciente_id_entry = Entry(add_window)
+        paciente_id_entry.place(x=150, y=20)
+
+        Label(add_window, text="Enfermeiro", bg='#EAE9E8').place(x=20, y=60)
+        enfermeiro_id_entry = Entry(add_window)
+        enfermeiro_id_entry.place(x=150, y=60)
+
+        Label(add_window, text="Tipo de Tratamento", bg='#EAE9E8').place(x=20, y=100)
+        tipo_tratamento_entry = Entry(add_window)
+        tipo_tratamento_entry.place(x=150, y=100)
+
+        Label(add_window, text="Data Início", bg='#EAE9E8').place(x=20, y=140)
+        data_inicio_entry = Entry(add_window)
+        data_inicio_entry.place(x=150, y=140)
+
+        Label(add_window, text="Data Fim", bg='#EAE9E8').place(x=20, y=180)
+        data_fim_entry = Entry(add_window)
+        data_fim_entry.place(x=150, y=180)
+
+        Label(add_window, text="Custos", bg='#EAE9E8').place(x=20, y=220)
+        custos_entry = Entry(add_window)
+        custos_entry.place(x=150, y=220)
+
+        Label(add_window, text="Resultados", bg='#EAE9E8').place(x=20, y=220)
+        resultados_entry = Entry(add_window)
+        resultados_entry.place(x=150, y=220)
+
+        Label(add_window, text="Observações", bg='#EAE9E8').place(x=20, y=260)
+        observacoes_entry = Entry(add_window)
+        observacoes_entry.place(x=150, y=260)
+
+
+        def submit_tratamento():
+            paciente_id = paciente_id_entry.get()
+            enfermeiro_id = enfermeiro_id_entry.get()
+            tipo_tratamento = tipo_tratamento_entry.get()
+            data_inicio = data_inicio_entry.get()
+            data_fim = data_fim_entry.get()
+            custos = custos_entry.get()
+            resultados = resultados_entry.get()
+            observacoes = observacoes_entry.get()
+
+            if not paciente_id or not enfermeiro_id or not tipo_tratamento or not data_inicio or not custos :
+                messagebox.showerror("Erro", "Preencha todos os campos.")
+            else:
+                try:
+                    TratamentoManager.create_tratamento(
+                        paciente_id=paciente_id,
+                        enfermeiro_id=enfermeiro_id, 
+                        tipo_tratamento=tipo_tratamento, 
+                        data_inicio=data_inicio,
+                        data_fim=data_fim,
+                        custos=custos,
+                        resultados=resultados,
+                        observacoes=observacoes
+                    )
+                    messagebox.showinfo("Tratamento", "Tratamento cadastrado com sucesso!")
+                    add_window.destroy()
+                    self.display_tratamento()
+                except Exception as e:
+                    messagebox.showerror("Erro", f"Erro ao cadastrar tratamento: {e}")
+
+        Button(add_window, text="Adicionar", command=submit_tratamento, bg="#4CAF50", fg="white").place(x=150, y=260, width=100, height=30)
+
+    def del_tratamento(self):
+        tratamento_id = simpledialog.askinteger("Excluir Tratamento", "Digite o ID do Tratamento a ser excluído:")
+
+        if tratamento_id is not None:
+                TratamentoManager.delete_tratamento(tratamento_id)
+                messagebox.showinfo("Tratamento", "Tratamento excluído com sucesso!")
+                self.display_tratamento()
+        else:
+            messagebox.showinfo("Erro", "Nenhum ID foi fornecido.")
 
     def open_dashboard(self):
         self.window.destroy()
@@ -316,10 +345,11 @@ class ConsultasView:
         from MedicosView import MedicosView
         medicos_window = Tk()
         MedicosView(medicos_window)
-        
+
+
 def page():
     window = Tk()
-    ConsultasView(window)
+    TratamentoView(window)
     window.mainloop()
 
 if __name__ == "__main__":

@@ -1,70 +1,78 @@
-from db_operations import insert_data, update_data, execute_query
+from mysql.connector import Error
+import logging
+from contextlib import contextmanager
+from db_connection import get_db_connection
 
-def criar_exame(nome, descricao, paciente_id, medico_id, data_exame):
-    query = """
-        INSERT INTO exames (nome, descricao, paciente_id, medico_id, data_exame)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    params = (nome, descricao, paciente_id, medico_id, data_exame)
-    insert_data(query, params)
+logging.basicConfig(level=logging.INFO)
 
-def atualizar_exame(exame_id, nome=None, descricao=None, paciente_id=None, medico_id=None, data_exame=None):
-    update_fields = []
-    params = []
+class ExameManager:
     
-    if nome is not None:
-        update_fields.append("nome = %s")
-        params.append(nome)
-    if descricao is not None:
-        update_fields.append("descricao = %s")
-        params.append(descricao)
-    if paciente_id is not None:
-        update_fields.append("paciente_id = %s")
-        params.append(paciente_id)
-    if medico_id is not None:
-        update_fields.append("medico_id = %s")
-        params.append(medico_id)
-    if data_exame is not None:
-        update_fields.append("data_exame = %s")
-        params.append(data_exame)
-    
-    params.append(exame_id)
-    update_string = ", ".join(update_fields)
-    query = f"UPDATE exames SET {update_string} WHERE id = %s"
-    
-    update_data(query, params)
+    @staticmethod
+    def create_exame(paciente_id, medico_id, enfermeiro_id, tipo_exame, data_hora, resultado, observacoes):
+        query = """
+        INSERT INTO exames (paciente_id, medico_id, enfermeiro_id, tipo_exame, data_hora, resultado, observacoes) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        params = (paciente_id, medico_id, enfermeiro_id, tipo_exame, data_hora, resultado, observacoes)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Exame inserido com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao inserir exame: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def deletar_exame(exame_id):
-    query = "DELETE FROM exames WHERE id = %s"
-    params = (exame_id,)
-    update_data(query, params)
-
-def consultar_exame(exame_id=None):
-    query = "SELECT * FROM exames"
-    params = ()
-    
-    if exame_id is not None:
-        query += " WHERE id = %s"
+    @staticmethod
+    def read_exame(exame_id):
+        query = "SELECT * FROM exames WHERE id = %s"
         params = (exame_id,)
-    
-    return execute_query(query, params, fetch_one=(exame_id is not None))
+        with get_db_connection() as db:
+            result = db.query(query, params)
+            if result:
+                return result[0]
+            else:
+                logging.info("Exame não encontrado.")
+                return None
 
-def registrar_resultado_exame(exame_id, resultado, observacoes):
-    query = """
+    @staticmethod
+    def update_exame(paciente_id, medico_id, enfermeiro_id, tipo_exame, data_hora, resultado, observacoes):
+        query = """
         UPDATE exames
-        SET resultado = %s, observacoes = %s, data_resultado = NOW()
+        SET paciente_id = %s, medico_id = %s, enfermeiro_id = %s, tipo_exame = %s, data_hora = %s, resultado = %s, observacoes = %s
         WHERE id = %s
-    """
-    params = (resultado, observacoes, exame_id)
-    update_data(query, params)
+        """
+        params = (paciente_id, medico_id, enfermeiro_id, tipo_exame, data_hora, resultado, observacoes)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Exame atualizado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao atualizar exame: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def consultar_resultados_paciente(paciente_id):
-    query = """
-        SELECT e.id, e.nome, e.descricao, e.data_exame, e.resultado, e.observacoes, e.data_resultado, m.nome AS nome_medico
-        FROM exames e
-        JOIN medicos m ON e.medico_id = m.id
-        WHERE e.paciente_id = %s
-        ORDER BY e.data_exame DESC
-    """
-    params = (paciente_id,)
-    return execute_query(query, params, fetch_all=True)
+    @staticmethod
+    def delete_exame(exame_id):
+        query = "DELETE FROM exames WHERE id = %s"
+        params = (exame_id,)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Exame deletado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao deletar exame: {e}")
+            if db.connection:
+                db.connection.rollback()
+
+    @staticmethod
+    def get_all_exames():
+        query = "SELECT * FROM exames"
+        with get_db_connection() as db:
+            result = db.query(query)
+            if result is not None:
+                return result
+            return []

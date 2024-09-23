@@ -1,79 +1,86 @@
-from db_operations import insert_data, update_data, execute_query
+from mysql.connector import Error
+import logging
+from contextlib import contextmanager
+from db_connection import get_db_connection
 
-def add_medicamento(nome, descricao, estoque, alerta_estoque):
-    query = """
-        INSERT INTO medicamentos (nome, descricao, estoque, alerta_estoque)
+logging.basicConfig(level=logging.INFO)
+
+@contextmanager
+def get_cursor(conn):
+    cursor = conn.cursor()
+    try:
+        yield cursor
+    finally:
+        cursor.close()
+
+class MedicamentoManager:
+    
+    @staticmethod
+    def create_medicamento(nome, descricao, estoque, alerta_estoque):
+        query = """
+        INSERT INTO medicamentos (nome, descricao, estoque, alerta_estoque) 
         VALUES (%s, %s, %s, %s)
-    """
-    params = (nome, descricao, estoque, alerta_estoque)
-    insert_data(query, params)
+        """
+        params = (nome, descricao, estoque, alerta_estoque)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Medicamento inserido com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao inserir medicamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def update_medicamento(id, nome=None, descricao=None, estoque=None, alerta_estoque=None):
-    update_fields = []
-    params = []
-    
-    if nome is not None:
-        update_fields.append("nome = %s")
-        params.append(nome)
-    if descricao is not None:
-        update_fields.append("descricao = %s")
-        params.append(descricao)
-    if estoque is not None:
-        update_fields.append("estoque = %s")
-        params.append(estoque)
-    if alerta_estoque is not None:
-        update_fields.append("alerta_estoque = %s")
-        params.append(alerta_estoque)
-    
-    params.append(id)
-    update_string = ", ".join(update_fields)
-    query = f"UPDATE medicamentos SET {update_string} WHERE id = %s"
-    
-    update_data(query, params)
-
-def get_medicamentos(medicamento_id=None):
-    query = "SELECT * FROM medicamentos"
-    params = ()
-    
-    if medicamento_id is not None:
-        query += " WHERE id = %s"
+    @staticmethod
+    def read_medicamento(medicamento_id):
+        query = "SELECT * FROM medicamentos WHERE id = %s"
         params = (medicamento_id,)
-        return execute_query(query, params, fetch_all=False)  
-    else:
-        return execute_query(query, params, fetch_all=True)
+        with get_db_connection() as db:
+            result = db.query(query, params)
+            if result:
+                return result[0]
+            else:
+                logging.info("Medicamento não encontrado.")
+                return None
 
-def check_estoque():
-    query = "SELECT * FROM medicamentos WHERE estoque < alerta_estoque"
-    return execute_query(query, fetch_all=True)
+    @staticmethod
+    def update_medicamento(medicamento_id, nome, descricao, estoque, alerta_estoque):
+        query = """
+        UPDATE medicamentos
+        SET nome = %s, descricao = %s, estoque = %s, alerta_estoque = %s
+        WHERE id = %s
+        """
+        params = (nome, descricao, estoque, alerta_estoque, medicamento_id)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Medicamento atualizado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao atualizar medicamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def create_prescricao(paciente_id, medico_id, medicamento_id, quantidade, data_prescricao):
-    query = """
-        INSERT INTO prescricoes (paciente_id, medico_id, medicamento_id, quantidade, data_prescricao)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    params = (paciente_id, medico_id, medicamento_id, quantidade, data_prescricao)
-    insert_data(query, params)
+    @staticmethod
+    def delete_medicamento(medicamento_id):
+        query = "DELETE FROM medicamentos WHERE id = %s"
+        params = (medicamento_id,)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Medicamento deletado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao deletar medicamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def search_medicamentos_by_name(name):
-    query = "SELECT * FROM medicamentos WHERE nome LIKE %s"
-    params = (f"%{name}%",)
-    return execute_query(query, params, fetch_all=True)
-
-def filter_medicamentos_by_estoque(min_estoque, max_estoque):
-    query = "SELECT * FROM medicamentos WHERE 1=1"
-    params = []
-
-    if min_estoque is not None:
-        query += " AND estoque >= %s"
-        params.append(min_estoque)
-
-    if max_estoque is not None:
-        query += " AND estoque <= %s"
-        params.append(max_estoque)
-
-    return execute_query(query, params, fetch_all=True)
-
-def filter_medicamentos_by_alerta():
-    query = "SELECT * FROM medicamentos WHERE estoque < alerta_estoque"
-
-    return execute_query(query, fetch_all=True)
+    @staticmethod
+    def get_all_medicamentos():
+        query = "SELECT * FROM medicamentos"
+        with get_db_connection() as db:
+            result = db.query(query)
+            if result is not None:
+                return result
+            return []

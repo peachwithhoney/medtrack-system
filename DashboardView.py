@@ -1,17 +1,13 @@
-import requests
 from tkinter import *
 from PIL import ImageTk, Image
 from tkinter import messagebox, ttk
-from werkzeug.security import check_password_hash
-import auth_services
-from db_operations import get_db_connection
 from feedbacks import contar_feedbacks
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from notification_operation import get_notifications
-from pharmacy import get_medicamentos
+from pharmacy import MedicamentoManager
 
-class Dashboard:
+class DashboardView:
     def __init__(self, window):
         self.window = window
         self.window.title("Medtrack")
@@ -132,7 +128,7 @@ class Dashboard:
         self.Consultas.place(x=40, y=95)
 
         self.Consultas_text = Button(self.sidebar, text="Consultas", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_consulta)
         self.Consultas_text.place(x=80, y=100)
         
         # Médicos
@@ -144,7 +140,7 @@ class Dashboard:
         self.Medicos.place(x=40, y=135)
 
         self.Medicos_text = Button(self.sidebar, text="Médicos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_medicos)
         self.Medicos_text.place(x=80, y=140)
         
         # Exames
@@ -156,7 +152,7 @@ class Dashboard:
         self.Exames.place(x=40, y=175)
 
         self.Exames_text = Button(self.sidebar, text="Exames", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_exame)
         self.Exames_text.place(x=80, y=180)
         
         # Tratamentos
@@ -168,7 +164,7 @@ class Dashboard:
         self.Tratamentos.place(x=40, y=215)
 
         self.Tratamentos_text = Button(self.sidebar, text="Tratamentos", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_tratamento)
         self.Tratamentos_text.place(x=80, y=220)
         
         # Cirurgias
@@ -180,7 +176,7 @@ class Dashboard:
         self.Cirurgias.place(x=40, y=255)
 
         self.Cirurgias_text = Button(self.sidebar, text="Cirurgias", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_cirurgia)
         self.Cirurgias_text.place(x=80, y=260)
         
         # Farmácia
@@ -192,12 +188,12 @@ class Dashboard:
         self.Farmacia.place(x=40, y=295)
 
         self.Farmacia_text = Button(self.sidebar, text="Farmacia", bg='#F4F4F4', font=("yu gothic ui", 17, "bold"), bd=0,
-                             cursor='hand2', activebackground='#F4F4F4')
+                             cursor='hand2', activebackground='#F4F4F4', command=self.open_medicamento)
         self.Farmacia_text.place(x=80, y=300)        
 
     def create_estoque_chart(self):
         
-        medicamentos = get_medicamentos()
+        medicamentos = MedicamentoManager.get_all_medicamentos()
 
         
         if medicamentos is None or len(medicamentos) == 0:
@@ -280,7 +276,7 @@ class Dashboard:
 
     def open_dashboard(self):
         self.window.destroy()
-        Dashboard()
+        DashboardView()
 
     def open_pacient(self):
         self.window.destroy()
@@ -290,11 +286,53 @@ class Dashboard:
         PacienteView(pacient_window)
         pacient_window.mainloop()
 
+    def open_medicamento(self):
+        self.window.destroy()
+
+        from pharmacyView import MedicamentoView
+        medicamento_window = Tk()
+        MedicamentoView(medicamento_window)
+        medicamento_window.mainloop()
+
+    def open_consulta(self):
+        self.window.destroy()
+
+        from ConsultasView import ConsultaView
+        consulta_window = Tk()
+        ConsultaView(consulta_window)
+
+    def open_exame(self):
+        self.window.destroy()
+
+        from ExamView import ExameView
+        exame_window = Tk()
+        ExameView(exame_window)
+
+    def open_tratamento(self):
+        self.window.destroy()
+
+        from TreatmentView import TratamentoView
+        tratamento_window = Tk()
+        TratamentoView(tratamento_window)
+
+    def open_cirurgia(self):
+        self.window.destroy()
+
+        from surgeriesView import CirurgiaView
+        cirurgia_window = Tk()
+        CirurgiaView(cirurgia_window)
+
+    def open_medicos(self):
+        self.window.destroy()
+
+        from MedicosView import MedicosView
+        medicos_window = Tk()
+        MedicosView(medicos_window)
     
 
 def page():
     window = Tk()
-    Dashboard(window)
+    DashboardView(window)
     window.mainloop()
 
 if __name__ == "__main__":

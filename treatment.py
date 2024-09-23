@@ -1,78 +1,78 @@
-from db_operations import insert_data, update_data, execute_query
+from mysql.connector import Error
+import logging
+from contextlib import contextmanager
+from db_connection import get_db_connection
 
-def criar_tratamento(nome, descricao, duracao, medico_id):
-    query = """
-        INSERT INTO tratamentos (nome, descricao, duracao, medico_id)
-        VALUES (%s, %s, %s, %s)
-    """
-    params = (nome, descricao, duracao, medico_id)
-    insert_data(query, params)
+logging.basicConfig(level=logging.INFO)
 
-def atualizar_tratamento(tratamento_id, nome=None, descricao=None, duracao=None, medico_id=None):
-    update_fields = []
-    params = []
+class TratamentoManager:
     
-    if nome is not None:
-        update_fields.append("nome = %s")
-        params.append(nome)
-    if descricao is not None:
-        update_fields.append("descricao = %s")
-        params.append(descricao)
-    if duracao is not None:
-        update_fields.append("duracao = %s")
-        params.append(duracao)
-    if medico_id is not None:
-        update_fields.append("medico_id = %s")
-        params.append(medico_id)
-    
-    params.append(tratamento_id)
-    update_string = ", ".join(update_fields)
-    query = f"UPDATE tratamentos SET {update_string} WHERE id = %s"
-    
-    update_data(query, params)
+    @staticmethod
+    def create_tratamento(paciente_id, enfermeiro_id, tipo_tratamento, data_inicio, data_fim, custos, resultados, observacoes):
+        query = """
+        INSERT INTO tratamentos (paciente_id, enfermeiro_id, tipo_tratamento, data_inicio, data_fim, custos, resultados, observacoes) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = (paciente_id, enfermeiro_id, tipo_tratamento, data_inicio, data_fim, custos, resultados, observacoes)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Tratamento inserido com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao inserir tratamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def deletar_tratamento(tratamento_id):
-    query = "DELETE FROM tratamentos WHERE id = %s"
-    params = (tratamento_id,)
-    update_data(query, params)
-
-def consultar_tratamento(tratamento_id=None):
-    query = "SELECT * FROM tratamentos"
-    params = ()
-    
-    if tratamento_id is not None:
-        query += " WHERE id = %s"
+    @staticmethod
+    def read_tratamento(tratamento_id):
+        query = "SELECT * FROM tratamentos WHERE id = %s"
         params = (tratamento_id,)
-    
-    return execute_query(query, params, fetch_one=(tratamento_id is not None))
+        with get_db_connection() as db:
+            result = db.query(query, params)
+            if result:
+                return result[0]
+            else:
+                logging.info("Tratamento não encontrado.")
+                return None
 
-def registrar_tratamento_paciente(paciente_id, tratamento_id, data_inicio, data_fim):
-    query = """
-        INSERT INTO paciente_tratamentos (paciente_id, tratamento_id, data_inicio, data_fim)
-        VALUES (%s, %s, %s, %s)
-    """
-    params = (paciente_id, tratamento_id, data_inicio, data_fim)
-    insert_data(query, params)
+    @staticmethod
+    def update_tratamento(paciente_id, enfermeiro_id, tipo_tratamento, data_inicio, data_fim, custos, resultados, observacoes):
+        query = """
+        UPDATE tratamentos
+        SET paciente_id = %s, enfermeiro_id = %s, tipo_tratamento = %s, data_inicio = %s, data_fim = %s, custos = %s, resultados = %s, observacoes = %s
+        WHERE id = %s
+        """
+        params = (paciente_id, enfermeiro_id, tipo_tratamento, data_inicio, data_fim, custos, resultados, observacoes)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Tratamento atualizado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao atualizar tratamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def consultar_tratamentos_paciente(paciente_id):
-    query = """
-        SELECT pt.data_inicio, pt.data_fim, t.nome, t.descricao, t.duracao, m.nome AS nome_medico
-        FROM paciente_tratamentos pt
-        JOIN tratamentos t ON pt.tratamento_id = t.id
-        JOIN medicos m ON t.medico_id = m.id
-        WHERE pt.paciente_id = %s
-        ORDER BY pt.data_inicio DESC
-    """
-    params = (paciente_id,)
-    return execute_query(query, params, fetch_all=True)
+    @staticmethod
+    def delete_tratamento(tratamento_id):
+        query = "DELETE FROM tratamentos WHERE id = %s"
+        params = (tratamento_id,)
+        try:
+            with get_db_connection() as db:
+                db.query(query, params)
+                db.connection.commit()
+                logging.info("Tratamento deletado com sucesso!")
+        except Error as e:
+            logging.error(f"Erro ao deletar tratamento: {e}")
+            if db.connection:
+                db.connection.rollback()
 
-def consultar_pacientes_tratamento(tratamento_id):
-    query = """
-        SELECT pt.data_inicio, pt.data_fim, p.nome AS nome_paciente, p.data_nascimento, p.genero
-        FROM paciente_tratamentos pt
-        JOIN pacientes p ON pt.paciente_id = p.id
-        WHERE pt.tratamento_id = %s
-        ORDER BY pt.data_inicio DESC
-    """
-    params = (tratamento_id,)
-    return execute_query(query, params, fetch_all=True)
+    @staticmethod
+    def get_all_tratamentos():
+        query = "SELECT * FROM tratamentos"
+        with get_db_connection() as db:
+            result = db.query(query)
+            if result is not None:
+                return result
+            return []
