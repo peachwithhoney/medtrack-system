@@ -5,7 +5,7 @@ from tkinter import messagebox
 from werkzeug.security import check_password_hash
 import auth_services
 from db_operations import get_db_connection
-from DashboardView import Dashboard
+from DashboardView import DashboardView
 
 class LoginForm:
     def __init__(self, window):
@@ -102,7 +102,7 @@ class LoginForm:
 
             self.window.destroy()
             dashboard_window = Tk()
-            Dashboard(dashboard_window)
+            DashboardView(dashboard_window)
             dashboard_window.mainloop()
 
         except Exception as e:
